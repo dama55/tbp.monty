@@ -29,6 +29,10 @@ from tbp.monty.frameworks.utils.logging_utils import (
 from tbp.monty.frameworks.utils.spatial_arithmetics import get_angle
 from tbp.monty.frameworks.utils.transform_utils import numpy_to_scipy_quat
 
+# カラーマップ
+from matplotlib import cm
+from matplotlib.colors import Normalize
+
 
 def plot_graph(
     graph: Union[Data, GraphObjectModel],
@@ -96,7 +100,8 @@ def plot_graph(
         ax.set_xlim([0, ax_lim])
         ax.set_ylim([ax_lim, 0])
     else:
-        ax.set_aspect("equal")
+        # ax.set_aspect("equal")
+        ax.set_aspect("auto")
     ax.view_init(rotation, 180)
     fig.tight_layout()
     return fig
@@ -1141,7 +1146,8 @@ def show_initial_hypotheses(
     )
     fig.colorbar(s)
     ax.set_xticks([]), ax.set_yticks([]), ax.set_zticks([])
-    ax.set_aspect("equal")
+    # ax.set_aspect("equal")
+    ax.set_aspect("auto")
     ax.view_init(rotation[0], rotation[1])
     possible_ax = ["x", "y", "z"]
     plt.title(f"Possible Rotations along {possible_ax[axis]} axis")
@@ -1228,7 +1234,8 @@ def plot_evidence_at_step(
             c=pose_colors[n],
         )
     ax.set_xticks([]), ax.set_yticks([]), ax.set_zticks([])
-    ax.set_aspect("equal")
+    # ax.set_aspect("equal")
+    ax.set_aspect("auto")
     plt.title("displacments \n+ pose feature")
     plt.suptitle(f"Step {step}", fontsize=20)
     if is_surface_sensor:
@@ -1295,12 +1302,20 @@ def plot_evidence_at_step(
                     input_feature_channel
                 ].pos
         evidences = np.array(lm_stats["evidences"][step][obj])
-        colors = evidences
+        # 正規化
+        norm = Normalize(vmin=min_evidence, vmax=max_evidence)
+        evidences_normalized = norm(evidences)  # → 0〜1 にスケーリングされた配列
+
+        # カラーマップに従ってRGB色を取得
+        colors = cm.seismic(evidences_normalized)  # (N, 4) RGBA形式
+        # colors = evidences
         sizes = np.array(lm_stats["evidences"][step][obj]) * 10
         sizes[sizes <= 0] = 0.1
         ids_not_updated = evidences < current_evidence_update_threshold
-        alphas = np.ones(colors.shape)
+        alphas = np.ones(colors.shape[0]) # (N, 4)->(N,)
         alphas[ids_not_updated] = 0.5
+        # アルファを上書き（evidences に応じて）
+        colors[:, 3] = alphas
 
         ax2 = plt.subplot(2, 4, 5 + n, projection="3d")
         _ = ax2.scatter(
@@ -1308,10 +1323,10 @@ def plot_evidence_at_step(
             locs[:, 1],
             locs[:, 2],
             c=colors,
-            cmap="seismic",
-            alpha=alphas,
-            vmin=min_evidence,
-            vmax=max_evidence,
+            # cmap="seismic", #カラーマップとalphaはcolor内で指定済み
+            # alpha=alphas,
+            # vmin=min_evidence,
+            # vmax=max_evidence,
             s=sizes,
         )
         _ = ax2.scatter(
@@ -1322,7 +1337,8 @@ def plot_evidence_at_step(
             s=2,
             alpha=0.5,
         )
-        ax2.set_aspect("equal")
+        # ax2.set_aspect("equal")
+        ax2.set_aspect("auto")
         # fig.colorbar(s)
         ax2.set_xticks([]), ax2.set_yticks([]), ax2.set_zticks([])
 

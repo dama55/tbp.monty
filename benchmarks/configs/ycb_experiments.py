@@ -69,6 +69,9 @@ from tbp.monty.simulators.habitat.configs import (
     SurfaceViewFinderMountHabitatDatasetArgs,
 )
 
+# 詳細データ記録用のクラス
+from tbp.monty.frameworks.config_utils.config_args import DetailedEvidenceLMLoggingConfig
+
 """
 (all use surface-agent models with 0.01 min dist and 64x64 resolution,
 feature change SM, 50 min_steps, 500 max_steps)
@@ -357,9 +360,10 @@ randrot_10distinctobj_surf_agent = copy.deepcopy(base_config_10distinctobj_surf_
 randrot_10distinctobj_surf_agent.update(
     experiment_args=EvalExperimentArgs(
         model_name_or_path=model_path_10distinctobj,
-        n_eval_epochs=10,
+        n_eval_epochs=1, # 10
         max_total_steps=5000,
     ),
+    logging_config=DetailedEvidenceLMLoggingConfig(),
     eval_dataloader_args=EnvironmentDataloaderPerObjectArgs(
         object_names=get_object_names_by_idx(0, 10, object_list=DISTINCT_OBJECTS),
         object_init_sampler=RandomRotationObjectInitializer(),
